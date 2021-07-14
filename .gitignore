@@ -1,0 +1,8 @@
+# dependencias
+/node_modules
+
+# configuración local
+/config/local.js
+
+# logs
+/logs

@@ -1,0 +1,21 @@
+{
+  "name": "dev-tools",
+  "version": "1.0.0",
+  "description": "Discord bot for developers and designers",
+  "main": "bot.js",
+  "scripts": {
+    "start": "node bot.js"
+  },
+  "keywords": [
+    "discord",
+    "bot",
+    "developers",
+    "designers"
+  ],
+  "author": "Hache_raw",
+  "dependencies": {
+    "config": "^3.3.6",
+    "discord.js": "^12.5.3",
+    "winston": "^3.3.3"
+  }
+}

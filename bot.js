@@ -9,56 +9,56 @@ const bot = (function () {
         /**
          * Encuentra códigos hexadecimales de color dentro de una cadena
          * 
-         * @param {Discord.Message} msg el mensaje donde se buscarán los códigos hexadecimales
+         * @param {String} msg la cadena donde se buscarán los códigos hexadecimales
          * @returns {Array} array con los códigos colores hexadecimales encontrados (sin el #)
          */
         findHexColors: msg => {
-            const hexCodes = msg.content.match(/#[a-fA-F0-9]+/g);
-
+            const candidateHexCodes = msg.match(/#([a-f0-9]+)\b/gi);
+            const hexCodes = candidateHexCodes.filter(code => [4, 5, 7, 9].includes(code.length));
             if (hexCodes === null) {
                 return [];
             }
 
-            const colors = [];
-            hexCodes.forEach(code => {
-                let color = code.replace("#", "");
-                if (color.length === 3) {
-                    // Si es un HEX de 3 caracteres lo convierte a 6
-                    color = color.split('').map(function (hex) {
-                        return hex + hex;
+            return hexCodes.map(code => {
+                if (code.length <= 5) {
+                    // Formato simplificado, hay que duplicar cada dígito
+                    return code.split('').map(function (hex) {
+                        return hex == '#' ? hex : hex + hex;
                     }).join('');
-                } else if (color.length !== 6) {
-                    // Si no es un HEX de 6 caracteres, no lo añade
-                    logger.debug(`omitido: ${code}`);
-                    return;
                 }
-
-                colors.push(color);
+                return code;
             });
-
-            return colors;
         },
         /**
          * Envía un mensaje al servidor
          * 
          * @param {Array} hexColors array con colores hexadecimales sin el hash (#)
-         * @param {Discord.Message} msg el mensaje que inició el comando
+         * @param {Discord.Message.Channel} channel el channel al que se enviará el mensaje
          */
-        sendHexColors: (hexColors, msg) => {
+        sendHexColors: (hexColors, channel) => {
             if (hexColors === null) {
                 return;
             }
 
             hexColors.forEach(color => {
-                // Envía el mensaje al canal
-                msg.channel.send(
-                    new Discord.MessageEmbed()
-                        .setTitle(`#${color}`)
-                        .setURL(`https://www.colorhexa.com/${color}`)
-                        .setImage(`https://singlecolorimage.com/get/${color}/200x32`)
-                        .setColor(color)
-                );
-                logger.info(`enviado: #${color}`);
+                const digits = color.substr(1, 6);
+                const transparency = color.substr(7, 2);
+
+                let embed = new Discord.MessageEmbed()
+                    .setTitle(`${color}`)
+                    .setURL(`https://www.colorhexa.com/${digits}`)
+                    .setImage(`https://singlecolorimage.com/get/${digits}/200x32`)
+                    .setColor(digits);
+
+                if (transparency !== '') {
+                    const transparencyPercentage = parseInt(transparency, 16) / 255;
+                    embed.setDescription(`Transparencia: ${transparencyPercentage}`);
+                }
+
+                // Envía el color al canal en formato embed
+                channel.send(embed);
+
+                logger.info(`enviado: ${color}`);
             });
         }
     }
@@ -69,7 +69,7 @@ const bot = (function () {
 client.on("message", function (msg) {
     if (msg.author.bot) return;
 
-    bot.sendHexColors(bot.findHexColors(msg), msg);
+    bot.sendHexColors(bot.findHexColors(msg.content), msg.channel);
 });
 
 
